@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="controls">
+            <select id="availableFields" multiple></select>
+            <button onclick="moveSelected('availableFields', 'displayFields')">>></button>
+            <button onclick="moveSelected('displayFields', 'availableFields')"><<</button>
+            <select id="displayFields" multiple></select>
+        </div>
+        <table id="productTable">
+            <!-- Table content will be dynamically generated here -->
+        </table>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('https://s3.amazonaws.com/open-to-cors/assignment.json')
+                .then(response => response.json())
+                .then(data => {
+                    // Sort data based on descending popularity
+                    data.sort((a, b) => b.Popularity - a.Popularity);
+                    
+                    // Dynamically populate availableFields select
+                    const availableFields = document.getElementById('availableFields');
+                    Object.keys(data[0]).forEach(field => {
+                        const option = document.createElement('option');
+                        option.value = field;
+                        option.text = field;
+                        availableFields.appendChild(option);
+                    });
+
+                    // Initial display with Title, Price ordered by descending Popularity
+                    displayData(data, ['Title', 'Price']);
+                });
+        });
+
+        function moveSelected(sourceId, targetId) {
+            const source = document.getElementById(sourceId);
+            const target = document.getElementById(targetId);
+
+            for (let i = 0; i < source.options.length; i++) {
+                const option = source.options[i];
+
+                if (option.selected) {
+                    target.add(new Option(option.text, option.value));
+                    option.remove();
+                    i--;
+                }
+            }
+        }
+
+        function displayData(data, displayFields) {
+            const table = document.getElementById('productTable');
+            
+            // Clear existing table content
+            table.innerHTML = '';
+
+            // Add table header
+            const headerRow = table.insertRow(0);
+            displayFields.forEach(field => {
+                const th = document.createElement('th');
+                th.textContent = field;
+                headerRow.appendChild(th);
+            });
+
+            // Add table rows
+            data.forEach(product => {
+                const row = table.insertRow(-1);
+
+                displayFields.forEach(field => {
+                    const cell = row.insertCell(-1);
+                    cell.textContent = product[field];
+                });
+            });
+        }
+    </script>
+</body>
+</html>
